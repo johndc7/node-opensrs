@@ -16,7 +16,7 @@
   "author": "John Callahan",
   "license": "ISC",
   "dependencies": {
-    "axios": "^0.21.1",
+    "axios": "^1.5.1",
     "xmlbuilder2": "^2.4.0"
   }
 }
