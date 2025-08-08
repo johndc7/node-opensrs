@@ -82,6 +82,62 @@ module.exports = (options) => ({
         console.error(data)
       return data && data.success;
     },
+    deleteDomain: async (domain) => {
+      let response = await fetch(`${options.mail.apiUrl}/delete_domain`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          credentials: options.mail.credentials,
+          domain
+        })
+      });
+      let data = await response.json();
+      if(!data || !data.success)
+        console.error(data)
+      return data && data.success;
+    },
+    getUser: async (user) => {
+      let response = await fetch(`${options.mail.apiUrl}/get_user`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          credentials: options.mail.credentials,
+          user
+        })
+      });
+      return await response.json();
+    },
+    renameUser: async (user, new_name) => {
+      let response = await fetch(`${options.mail.apiUrl}/rename_user`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          credentials: options.mail.credentials,
+          user,
+          new_name
+        })
+      });
+      let data = await response.json();
+      if(!data || !data.success)
+        console.error(data)
+      return data && data.success;
+    },
+    restoreDomain: async (domain, id, new_name) => {
+      let response = await fetch(`${options.mail.apiUrl}/restore_domain`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          credentials: options.mail.credentials,
+          domain,
+          id,
+          new_name
+        })
+      });
+      let data = await response.json();
+      if(!data || !data.success)
+        console.error(data)
+      return data && data.success;
+    },
   },
   domains: {
     getDomainsContacts: async (domains) => {
@@ -209,6 +265,78 @@ module.exports = (options) => ({
       let data = await response.text();
       let price = parseXml(data);
       return price.body.attributes
+    },
+    lookup: async (params) => {
+      if(!params || !params.domain)
+        throw new Error('Missing required paramaters for lookup()')
+      let xml = buildXmlRequest({
+        dt_assoc: {
+          item: [
+            {'@key': 'protocol', '#': 'XCP'},
+            {'@key': 'object', '#': 'DOMAIN'},
+            {'@key': 'action', '#': 'LOOKUP'},
+            {'@key': 'attributes', '#': {
+              dt_assoc: {
+                item: [
+                  Object.keys(params).map((key) => ({
+                    '@key': key,
+                    '#': params[key]
+                  }))
+                ]
+              }
+            }}
+          ]
+        }
+      })
+      let response = await fetch(options.domains.apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/xml',
+          'X-Username': options.domains.username,
+          'X-Signature': getSignature(xml, options.domains.apiKey),
+          'Content-Length': xml.length
+        },
+        body: xml
+      });
+      let data = await response.text();
+      let lookup = parseXml(data);
+      return lookup.body.attributes
+    },
+    sw_register: async (params) => {
+      if(!params)
+        throw new Error('Missing required paramaters for sw_register()')
+      let xml = buildXmlRequest({
+        dt_assoc: {
+          item: [
+            {'@key': 'protocol', '#': 'XCP'},
+            {'@key': 'object', '#': 'DOMAIN'},
+            {'@key': 'action', '#': 'SW_REGISTER'},
+            {'@key': 'attributes', '#': {
+              dt_assoc: {
+                item: [
+                  Object.keys(params).map((key) => ({
+                    '@key': key,
+                    '#': params[key]
+                  }))
+                ]
+              }
+            }}
+          ]
+        }
+      })
+      let response = await fetch(options.domains.apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/xml',
+          'X-Username': options.domains.username,
+          'X-Signature': getSignature(xml, options.domains.apiKey),
+          'Content-Length': xml.length
+        },
+        body: xml
+      });
+      let data = await response.text();
+      let register = parseXml(data);
+      return register.body.attributes
     }
   },
   events: {
