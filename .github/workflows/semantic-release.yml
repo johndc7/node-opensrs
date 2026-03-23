@@ -12,7 +12,7 @@ jobs:
       contents: write
       issues: write
       pull-requests: write
-      id-token: write
+      id-token: write # Required for OIDC / Trusted Publishing
 
     steps:
       - name: Checkout repository
@@ -25,7 +25,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 24
-          registry-url: 'https://registry.npmjs.org/'
+          # Note: registry-url was removed to prevent conflicts with semantic-release
 
       - name: Install dependencies
         run: npm ci
@@ -33,5 +33,5 @@ jobs:
       - name: Semantic Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_PROVENANCE: true
         run: npx semantic-release
